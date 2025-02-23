@@ -7,7 +7,11 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 with open("requirements.txt") as req_file:
-    requirements = list(filter(None, req_file.read().split("\n")))
+    all_requirements = list(filter(None, req_file.read().split("\n")))
+
+# Separate GitHub dependencies
+install_requires = [req for req in all_requirements if not req.startswith("git+")]
+dependency_links = [req for req in all_requirements if req.startswith("git+")]
 
 __version__ = None
 with open("utime/version.py") as version_file:
@@ -26,19 +30,21 @@ setup(
     url='https://github.com/perslev/U-Time',
     license="LICENSE.txt",
     packages=find_packages(),
-    package_dir={'utime':
-                 'utime'},
+    package_dir={'utime': 'utime'},
     include_package_data=True,
-    setup_requires=["setuptools_git>=0.3",],
+    setup_requires=["setuptools_git>=0.3"],
     entry_points={
        'console_scripts': [
            'ut=utime.bin.ut:entry_func',
        ],
     },
-    install_requires=requirements,
-    classifiers=['Environment :: Console',
-                 'Operating System :: POSIX',
-                 'Programming Language :: Python :: 3.6',
-                 'Programming Language :: Python :: 3.7',
-                 'License :: OSI Approved :: MIT License']
+    install_requires=install_requires,
+    dependency_links=dependency_links,  # Add this to handle Git dependencies
+    classifiers=[
+        'Environment :: Console',
+        'Operating System :: POSIX',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'License :: OSI Approved :: MIT License'
+    ]
 )
