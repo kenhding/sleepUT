@@ -12,58 +12,57 @@ from scipy.signal import butter, filtfilt, hilbert
 
 
 logger = logging.getLogger(__name__)
+# def compute_pac(xs, fs=128):
+#     """
+#     Adds robust cross-frequency coupling (PAC) channels to the input data.
 
-def compute_pac(xs, fs=128):
-    """
-    Adds robust cross-frequency coupling (PAC) channels to the input data.
-
-    Parameters:
-        xs: np.ndarray, shape (batch_size, epochs, time_steps, channels) 
-            Input data with multiple channels (e.g., EEG, EOG) in 4D.
-        fs: int 
-            Sampling rate (default: 128 Hz).
+#     Parameters:
+#         xs: np.ndarray, shape (batch_size, epochs, time_steps, channels) 
+#             Input data with multiple channels (e.g., EEG, EOG) in 4D.
+#         fs: int 
+#             Sampling rate (default: 128 Hz).
     
-    Returns:
-        np.ndarray: Shape (batch_size, epochs, time_steps, original_channels + PAC_channels).
-    """
-    bands = [(0.5, 4, 4, 8), (0.5, 4, 8, 12), (4, 8, 8, 12)]  # Example band pairs
+#     Returns:
+#         np.ndarray: Shape (batch_size, epochs, time_steps, original_channels + PAC_channels).
+#     """
+#     bands = [(0.5, 4, 4, 8), (0.5, 4, 8, 12), (4, 8, 8, 12)]  # Example band pairs
 
-    def bandpass_filter(data, low, high, fs, order=4):
-        nyquist = fs / 2
-        low /= nyquist
-        high /= nyquist
-        b, a = butter(order, [low, high], btype='band')
-        return filtfilt(b, a, data, axis=-1)
+#     def bandpass_filter(data, low, high, fs, order=4):
+#         nyquist = fs / 2
+#         low /= nyquist
+#         high /= nyquist
+#         b, a = butter(order, [low, high], btype='band')
+#         return filtfilt(b, a, data, axis=-1)
 
-    batch_size, epochs, time_steps, n_channels = xs.shape
-    pac_channels = []  # Collect PAC channels for all batches
+#     batch_size, epochs, time_steps, n_channels = xs.shape
+#     pac_channels = []  # Collect PAC channels for all batches
 
-    for batch_idx in range(batch_size):
-        batch_pac = []  # PAC features for this batch
-        for ch1 in range(n_channels):  # Iterate over all channels for phase
-            for ch2 in range(n_channels):  # Iterate over all channels for amplitude
-                for low_phase, high_phase, low_amp, high_amp in bands:
-                    # Filter for phase band in channel ch1
-                    phase_data = bandpass_filter(xs[batch_idx, :, :, ch1], low_phase, high_phase, fs)
-                    phase_angle = np.angle(hilbert(phase_data, axis=-1))
+#     for batch_idx in range(batch_size):
+#         batch_pac = []  # PAC features for this batch
+#         for ch1 in range(n_channels):  # Iterate over all channels for phase
+#             for ch2 in range(n_channels):  # Iterate over all channels for amplitude
+#                 for low_phase, high_phase, low_amp, high_amp in bands:
+#                     # Filter for phase band in channel ch1
+#                     phase_data = bandpass_filter(xs[batch_idx, :, :, ch1], low_phase, high_phase, fs)
+#                     phase_angle = np.angle(hilbert(phase_data, axis=-1))
 
-                    # Filter for amplitude band in channel ch2
-                    amp_data = bandpass_filter(xs[batch_idx, :, :, ch2], low_amp, high_amp, fs)
-                    amp_envelope = np.abs(hilbert(amp_data, axis=-1))
+#                     # Filter for amplitude band in channel ch2
+#                     amp_data = bandpass_filter(xs[batch_idx, :, :, ch2], low_amp, high_amp, fs)
+#                     amp_envelope = np.abs(hilbert(amp_data, axis=-1))
 
-                    # Compute PAC (e.g., Modulation Index)
-                    pac = amp_envelope * np.cos(phase_angle)  # Simplified PAC example
-                    batch_pac.append(pac)
+#                     # Compute PAC (e.g., Modulation Index)
+#                     pac = amp_envelope * np.cos(phase_angle)  # Simplified PAC example
+#                     batch_pac.append(pac)
 
-        # Stack PAC features for the current batch
-        batch_pac = np.stack(batch_pac, axis=-1)  # Shape: (epochs, time_steps, num_PAC_channels)
-        pac_channels.append(batch_pac)
+#         # Stack PAC features for the current batch
+#         batch_pac = np.stack(batch_pac, axis=-1)  # Shape: (epochs, time_steps, num_PAC_channels)
+#         pac_channels.append(batch_pac)
 
-    # Stack PAC channels for all batches
-    pac_channels = np.stack(pac_channels, axis=0)  # Shape: (batch_size, epochs, time_steps, num_PAC_channels)
+#     # Stack PAC channels for all batches
+#     pac_channels = np.stack(pac_channels, axis=0)  # Shape: (batch_size, epochs, time_steps, num_PAC_channels)
 
-    # Concatenate PAC channels with the original data
-    return np.concatenate([xs, pac_channels], axis=-1)
+#     # Concatenate PAC channels with the original data
+#     return np.concatenate([xs, pac_channels], axis=-1)
 
 
 
@@ -477,9 +476,8 @@ class BaseSequence(_BaseSequence):
                                "expected {}".format(X.ndim,
                                                     X.shape,
                                                     expected_dim))
-        
-        
-        X = compute_pac(X)
+
+        # X = compute_pac(X)
 
         if self.batch_scaler:
             # Scale the batch
